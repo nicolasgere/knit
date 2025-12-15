@@ -7,7 +7,7 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/nicolasgere/monogo/lib/utils"
+	"github.com/nicolasgere/knit/lib/utils"
 )
 
 func NewRunner(ctx context.Context, concurency int) Runner {
@@ -25,7 +25,7 @@ type Runner struct {
 func (r *Runner) ExecCommand(cmd *exec.Cmd, tf *TaskFuture, task *Task) {
 	r.semaphore <- struct{}{}
 	defer func() { <-r.semaphore }()
-	utils.LogWithTaskId(task.Id, "Run task -> "+task.Cmd, utils.INFO)
+	utils.LogTaskStart(task.Id, task.Cmd)
 	pipeout, err := cmd.StdoutPipe()
 	if err != nil {
 		tf.Done <- TaskResult{Err: err, Status: 1}

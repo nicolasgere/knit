@@ -1,48 +1,92 @@
-# Monogo CLI Tool
+<div align="center">
+  <img src="logo.png" alt="Knit" width="200"/>
+  <h1>Knit</h1>
+  <p>Zero-config tool for Go workspace monorepos</p>
+</div>
 
-Monogo is a 0 configuration tool companion for go workspace monorepo. It is like Turborepo but for Go
+## Why Knit?
 
-## Installation
+Built for Go monorepos using `go.work`. Run commands only on affected modules.
 
-To install Monogo, clone the repository and build the binary:
+**Use cases:**
+- **CI**: Test only what changed in a PR
+- **Pre-commit**: Format only modified modules
+- **Local dev**: Run commands on specific modules
 
-```sh
-go install github.com/nicolasgere/monogo@latest
-```
-
-## Usage
-
-### Commands
-
-#### `install`
-
-Install dependencies for every module.
+## Install
 
 ```sh
-monogo install [flags]
+go install github.com/nicolasgere/knit@latest
 ```
 
-#### `fmt`
-
-Format every module.
+## Commands
 
 ```sh
-monogo fmt [flags]
+knit test              # Run tests on all modules
+knit fmt               # Format all modules
+knit affected          # List changed modules
+knit graph             # Show dependency graph
 ```
 
-#### `test`
-
-Run tests for every module.
+### Options
 
 ```sh
-monogo test [flags]
+-p, --path       Workspace root
+-t, --target     Specific module
+-a, --affected   Run on affected modules only
+-b, --base       Git ref to compare (with --affected)
+-c, --color      Colored output
 ```
 
-### Flags
+## Examples
 
-All commands support the following flags:
+```sh
+# Run all tests with color
+knit test --color
 
-- `--target, -t`: Specify a targeted module.
-- `--dependency, -d`: Run with all dependencies of the target (both descendants and ascendants).
-- `--branch, -b`: Compare the current branch with the master branch and find affected modules.
-- `--path, -p`: Directory to run the cli in, default .
+# Run tests on affected modules (CI)
+knit test --affected
+
+# Run tests on affected modules (compare against develop)
+knit test --affected --base develop
+
+# Format affected modules
+knit fmt --affected
+
+# Test specific module
+knit test -t example.com/api
+
+# Get list of affected modules
+knit affected --merge-base
+
+# Visualize dependencies
+knit graph -f dot | dot -Tpng -o deps.png
+```
+
+## CI
+
+```yaml
+# Simple: test affected modules
+- run: knit test --affected --color
+
+# Or parallelize with GitHub matrix
+- id: affected
+  run: echo "matrix=$(knit affected --merge-base -f github-matrix)" >> $GITHUB_OUTPUT
+- strategy:
+    matrix: ${{ fromJson(steps.affected.outputs.matrix) }}
+  run: knit test -t ${{ matrix.module }}
+```
+
+## Pre-commit
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: knit-fmt
+        name: Format affected modules
+        entry: knit fmt --affected --base HEAD
+        language: system
+        pass_filenames: false
+```

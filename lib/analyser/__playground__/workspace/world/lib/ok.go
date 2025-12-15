@@ -1,9 +1,7 @@
 package lib
 
-import (
-	hello "hello/lib"
-)
+import "hello"
 
 func Toto() string {
-	return hello.Hello() + "toto"
+	return hello.Hello()
 }

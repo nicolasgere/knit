@@ -1,4 +1,4 @@
-module github.com/nicolasgere/monogo
+module github.com/nicolasgere/knit
 
 go 1.22.4
 
